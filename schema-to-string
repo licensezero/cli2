@@ -1,0 +1,14 @@
+#!/bin/bash
+if [ -z "$1" ] || [ -z "$2" ]; then
+  echo "Usage: <identifier> <url>"
+  exit 1
+fi
+
+file="$1.generated.go"
+
+schema=$(curl -s "$2")
+cat <<HEREDOC >"$file"
+package main
+
+const $1 = \`$schema\`
+HEREDOC
