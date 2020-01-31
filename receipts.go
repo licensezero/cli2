@@ -104,17 +104,17 @@ var schema1_0_0Pre = []string{
 	url1_0_0Pre,
 }
 
-var v1SchemaLoader *gojsonschema.SchemaLoader
+var v1ReceiptSchemaLoader *gojsonschema.SchemaLoader
 var v1ReceiptSchema *gojsonschema.Schema
 
 func init() {
-	v1SchemaLoader = gojsonschema.NewSchemaLoader()
+	v1ReceiptSchemaLoader = gojsonschema.NewSchemaLoader()
 	for _, schema := range schema1_0_0Pre {
 		loader := gojsonschema.NewStringLoader(schema)
-		v1SchemaLoader.AddSchemas(loader)
+		v1ReceiptSchemaLoader.AddSchemas(loader)
 	}
 	receiptLoader := gojsonschema.NewStringLoader(receipt1_0_0Pre)
-	v1ReceiptSchema, _ = v1SchemaLoader.Compile(receiptLoader)
+	v1ReceiptSchema, _ = v1ReceiptSchemaLoader.Compile(receiptLoader)
 }
 
 func validV1Receipt(parsed interface{}) bool {
