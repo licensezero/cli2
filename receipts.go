@@ -74,15 +74,6 @@ func ReadReceipts(configPath string) (receipts []Receipt, errors []error, err er
 	return
 }
 
-//go:generate ./schema-to-string jurisdiction1_0_0Pre https://schemas.licensezero.com/1.0.0-pre/jurisdiction.json
-//go:generate ./schema-to-string key1_0_0Pre https://schemas.licensezero.com/1.0.0-pre/key.json
-//go:generate ./schema-to-string name1_0_0Pre https://schemas.licensezero.com/1.0.0-pre/name.json
-//go:generate ./schema-to-string price1_0_0Pre https://schemas.licensezero.com/1.0.0-pre/price.json
-//go:generate ./schema-to-string receipt1_0_0Pre https://schemas.licensezero.com/1.0.0-pre/receipt.json
-//go:generate ./schema-to-string signature1_0_0Pre https://schemas.licensezero.com/1.0.0-pre/signature.json
-//go:generate ./schema-to-string time1_0_0Pre https://schemas.licensezero.com/1.0.0-pre/time.json
-//go:generate ./schema-to-string url1_0_0Pre https://schemas.licensezero.com/1.0.0-pre/url.json
-
 func readReceipt(filePath string) (*Receipt, error) {
 	data, err := ioutil.ReadFile(filePath)
 	if err != nil {

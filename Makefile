@@ -14,5 +14,4 @@ build: prebuild
 .PHONY: prebuild
 
 prebuild:
-	go generate
 	go get -ldflags "$(LDFLAGS)" ./...
