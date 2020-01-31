@@ -36,7 +36,7 @@ type Licensor struct {
 	LicensorID   string
 }
 
-// License represents a party that bought a license.
+// Licensee represents a party that bought a license.
 type Licensee struct {
 	EMail        string
 	Jurisdiction string
