@@ -11,51 +11,67 @@ import (
 
 // Receipt represents a receipt for a license.
 type Receipt struct {
+	API       string
 	OfferID   string
 	OrderID   string
 	Effective string
 	Expires   string
-	Licensor  struct {
-		EMail        string
-		Jurisdiction string
-		Name         string
-		LicensorID   string
-	}
-	Licensee struct {
-		EMail        string
-		Jurisdiction string
-		Name         string
-	}
-	Vendor struct {
-		API          string
-		EMail        string
-		Name         string
-		Jurisdiction string
-		Website      string
-	}
+	Price     Price
+	Licensor  Licensor
+	Licensee  Licensee
+	Vendor    Vendor
+}
+
+// Price represents a monetary amount.
+type Price struct {
+	Currency string
+	Amount   uint
+}
+
+// Licensor represents a party that offered licenses for sale.
+type Licensor struct {
+	EMail        string
+	Jurisdiction string
+	Name         string
+	LicensorID   string
+}
+
+// License represents a party that bought a license.
+type Licensee struct {
+	EMail        string
+	Jurisdiction string
+	Name         string
+}
+
+// Vendor represents a party that sold a license.
+type Vendor struct {
+	EMail        string
+	Name         string
+	Jurisdiction string
+	Website      string
 }
 
 // ReadReceipts reads all receipts in the configuration directory.
-func ReadReceipts(configPath string) ([]Receipt, error) {
+func ReadReceipts(configPath string) (receipts []Receipt, errors []error, err error) {
 	directoryPath := path.Join(configPath, "receipts")
 	entries, directoryReadError := ioutil.ReadDir(directoryPath)
 	if directoryReadError != nil {
 		if os.IsNotExist(directoryReadError) {
-			return []Receipt{}, nil
+			return
 		}
-		return nil, directoryReadError
+		return nil, nil, directoryReadError
 	}
-	var receipts []Receipt
 	for _, entry := range entries {
 		name := entry.Name()
 		filePath := path.Join(configPath, "receipts", name)
 		receipt, err := readReceipt(filePath)
 		if err != nil {
-			return nil, err
+			errors = append(errors, err)
+		} else {
+			receipts = append(receipts, *receipt)
 		}
-		receipts = append(receipts, *receipt)
 	}
-	return receipts, nil
+	return
 }
 
 //go:generate ./schema-to-string jurisdiction1_0_0Pre https://schemas.licensezero.com/1.0.0-pre/jurisdiction.json
@@ -77,18 +93,10 @@ func readReceipt(filePath string) (*Receipt, error) {
 	if err != nil {
 		return nil, err
 	}
-	asMap, ok := unstructured.(map[string]interface{})
-	if ok != true {
-		return nil, errors.New("not an Object")
+	if validV1Receipt(unstructured) {
+		return parseV1Receipt(unstructured), nil
 	}
-	schemaID, ok := asMap["$schema"].(string)
-	if ok != true {
-		return nil, errors.New("$schema is not a string")
-	}
-	if schemaID == "https://schemas.licensezero.com/1.0.0-pre/receipt.json" {
-		return parseV1Receipt(asMap)
-	}
-	return nil, errors.New("unknown schema: " + schemaID)
+	return nil, errors.New("unknown schema")
 }
 
 var schema1_0_0Pre = []string{
@@ -100,52 +108,77 @@ var schema1_0_0Pre = []string{
 	url1_0_0Pre,
 }
 
-func parseV1Receipt(parsed map[string]interface{}) (*Receipt, error) {
-	schemaLoader := gojsonschema.NewSchemaLoader()
+var v1SchemaLoader *gojsonschema.SchemaLoader
+var v1ReceiptSchema *gojsonschema.Schema
+
+func init() {
+	v1SchemaLoader = gojsonschema.NewSchemaLoader()
 	for _, schema := range schema1_0_0Pre {
 		loader := gojsonschema.NewStringLoader(schema)
-		schemaLoader.AddSchemas(loader)
+		v1SchemaLoader.AddSchemas(loader)
 	}
 	receiptLoader := gojsonschema.NewStringLoader(receipt1_0_0Pre)
-	schema, err := schemaLoader.Compile(receiptLoader)
-	if err != nil {
-		return nil, err
-	}
+	v1ReceiptSchema, _ = v1SchemaLoader.Compile(receiptLoader)
+}
 
-	document := gojsonschema.NewGoLoader(parsed)
-	result, err := schema.Validate(document)
+func validV1Receipt(parsed interface{}) bool {
+	dataLoader := gojsonschema.NewGoLoader(parsed)
+	result, err := v1ReceiptSchema.Validate(dataLoader)
 	if err != nil {
-		return nil, err
+		return false
 	}
-	if !result.Valid() {
-		return nil, errors.New("does not conform to schema")
-	}
+	return result.Valid()
+}
 
-	var receipt Receipt
-	license := parsed["license"].(map[string]interface{})
+func parseV1Receipt(parsed interface{}) *Receipt {
+	object := parsed.(map[string]interface{})
+	license := object["license"].(map[string]interface{})
 	values := license["values"].(map[string]interface{})
-	receipt.OfferID = values["offerID"].(string)
-	receipt.OrderID = values["orderID"].(string)
-	receipt.Effective = values["effective"].(string)
-	receipt.Expires = values["expires"].(string)
-
-	licensor := values["licensor"].(map[string]string)
-	receipt.Licensor.EMail = licensor["email"]
-	receipt.Licensor.Jurisdiction = licensor["jurisdiction"]
-	receipt.Licensor.Name = licensor["name"]
-	receipt.Licensor.LicensorID = licensor["licensorID"]
-
-	licensee := values["licensee"].(map[string]string)
-	receipt.Licensee.EMail = licensee["email"]
-	receipt.Licensee.Jurisdiction = licensee["jurisdiction"]
-	receipt.Licensee.Name = licensee["name"]
-
-	vendor := values["vendor"].(map[string]string)
-	receipt.Vendor.API = vendor["api"]
-	receipt.Vendor.EMail = vendor["email"]
-	receipt.Vendor.Jurisdiction = vendor["jurisdiction"]
-	receipt.Vendor.Name = vendor["name"]
-	receipt.Vendor.Website = vendor["website"]
-
-	return &receipt, nil
+	licensor := values["licensor"].(map[string]interface{})
+	licensee := values["licensee"].(map[string]interface{})
+	// Parse optional expiration date.
+	expires, ok := values["expires"].(string)
+	if ok == false {
+		expires = ""
+	}
+	// Parse optional vendor information.
+	var vendor Vendor
+	vendorMap, ok := values["vendor"].(map[string]interface{})
+	if ok == true {
+		vendor = Vendor{
+			EMail:        vendorMap["email"].(string),
+			Jurisdiction: vendorMap["jurisdiction"].(string),
+			Name:         vendorMap["name"].(string),
+			Website:      vendorMap["website"].(string),
+		}
+	}
+	// Parse optional price.
+	var price Price
+	priceMap, ok := values["price"].(map[string]interface{})
+	if ok == true {
+		price = Price{
+			Currency: priceMap["currency"].(string),
+			Amount:   uint(priceMap["amount"].(float64)),
+		}
+	}
+	return &Receipt{
+		API:       values["api"].(string),
+		OfferID:   values["offerID"].(string),
+		OrderID:   values["orderID"].(string),
+		Effective: values["effective"].(string),
+		Expires:   expires,
+		Price:     price,
+		Licensor: Licensor{
+			EMail:        licensor["email"].(string),
+			Jurisdiction: licensor["jurisdiction"].(string),
+			Name:         licensor["name"].(string),
+			LicensorID:   licensor["licensorID"].(string),
+		},
+		Licensee: Licensee{
+			EMail:        licensee["email"].(string),
+			Jurisdiction: licensee["jurisdiction"].(string),
+			Name:         licensee["name"].(string),
+		},
+		Vendor: vendor,
+	}
 }
