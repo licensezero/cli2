@@ -84,6 +84,11 @@ func readReceipt(filePath string) (*Receipt, error) {
 	if err != nil {
 		return nil, err
 	}
+	return ParseReceipt(unstructured)
+}
+
+// ParseReceipt validates and parses parsed JSON data as a Receipt.
+func ParseReceipt(unstructured interface{}) (*Receipt, error) {
 	if validV1Receipt(unstructured) {
 		return parseV1Receipt(unstructured), nil
 	}
