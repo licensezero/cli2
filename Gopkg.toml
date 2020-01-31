@@ -1,3 +1,7 @@
+[[constraint]]
+  name = "github.com/xeipuuv/gojsonschema"
+  version = "1.2.0"
+
 [prune]
   go-tests = true
   unused-packages = true
