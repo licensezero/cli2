@@ -1,9 +1,6 @@
-package inventory
+package main
 
 import (
-	"licensezero.com/cli2/abstract"
-	"licensezero.com/cli2/api"
-	"licensezero.com/cli2/user"
 	"os"
 	"path"
 )
@@ -28,7 +25,7 @@ type Item struct {
 	Public  string
 	API     string
 	OfferID string
-	Offer   abstract.Offer
+	Offer   Offer
 }
 
 type finding struct {
@@ -50,18 +47,18 @@ func CompileInventory(
 	ignoreReciprocal bool,
 ) (inventory *Inventory, err error) {
 	// TODO: Don't ignore receipt read errors.
-	receipts, _, err := user.ReadReceipts(configPath)
+	receipts, _, err := ReadReceipts(configPath)
 	if err != nil {
 		return
 	}
 	// TODO: Don't ignore account read errors.
-	accounts, _, err := user.ReadAccounts(configPath)
+	accounts, _, err := ReadAccounts(configPath)
 	findings, err := find(cwd)
 	if err != nil {
 		return
 	}
 	for _, finding := range findings {
-		offer, err := api.GetOffer(finding.API, finding.OfferID)
+		offer, err := GetOffer(finding.API, finding.OfferID)
 		var item Item
 		if err != nil {
 			inventory.Invalid = append(inventory.Invalid, Item{
@@ -140,7 +137,7 @@ func alreadyHave(findings []finding, finding *finding) bool {
 	return false
 }
 
-func haveReceipt(item *Item, receipts []abstract.Receipt) bool {
+func haveReceipt(item *Item, receipts []Receipt) bool {
 	api := item.API
 	offerID := item.OfferID
 	for _, account := range receipts {
@@ -151,7 +148,7 @@ func haveReceipt(item *Item, receipts []abstract.Receipt) bool {
 	return false
 }
 
-func ownProject(item *Item, accounts []abstract.Account) bool {
+func ownProject(item *Item, accounts []Account) bool {
 	api := item.API
 	licensorID := item.Offer.LicensorID()
 	for _, account := range accounts {

@@ -1,4 +1,4 @@
-package abstract
+package main
 
 const key1_0_0PreSchema = `{
   "$schema": "http://json-schema.org/schema#",

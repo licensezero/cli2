@@ -1,13 +1,12 @@
-package api
+package main
 
 import (
 	"encoding/json"
 	"io/ioutil"
-	"licensezero.com/cli2/abstract"
 	"net/http"
 )
 
-func GetOffer(api string, offerID string) (offer abstract.Offer, err error) {
+func GetOffer(api string, offerID string) (offer Offer, err error) {
 	response, err := http.Get(api + "/offers/" + offerID)
 	if err != nil {
 		return
@@ -22,7 +21,7 @@ func GetOffer(api string, offerID string) (offer abstract.Offer, err error) {
 	if err != nil {
 		return
 	}
-	offer, err = abstract.ParseOffer(unstructured)
+	offer, err = ParseOffer(unstructured)
 	if err != nil {
 		return
 	}

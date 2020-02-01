@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path"
@@ -113,30 +112,30 @@ func TestReadReceipts(t *testing.T) {
 		}
 
 		first := results[0]
-		if first.API != "https://api.licensezero.com" {
+		if first.API() != "https://api.licensezero.com" {
 			t.Error("failed to parse API")
 		}
-		if first.OrderID != "2c743a84-09ce-4549-9f0d-19d8f53462bb" {
+		if first.OrderID() != "2c743a84-09ce-4549-9f0d-19d8f53462bb" {
 			t.Error("failed to parse orderID")
 		}
-		if first.OfferID != "9aab7058-599a-43db-9449-5fc0971ecbfa" {
+		if first.OfferID() != "9aab7058-599a-43db-9449-5fc0971ecbfa" {
 			t.Error("failed to parse orderID")
 		}
-		if first.Effective != "2018-11-13T20:20:39Z" {
+		if first.Effective() != "2018-11-13T20:20:39Z" {
 			t.Error("failed to parse effective date")
 		}
-		if first.Expires != "2019-11-13T20:20:39Z" {
+		if first.Expires() != "2019-11-13T20:20:39Z" {
 			t.Error("added expiration date")
 		}
-		if first.Price.Amount != 1000 {
+		if first.Price().Amount != 1000 {
 			t.Error("failed to parse price amount")
 		}
-		if first.Price.Currency != "USD" {
+		if first.Price().Currency != "USD" {
 			t.Error("failed to parse price currency")
 		}
 
 		second := results[1]
-		if second.Vendor.Name != "" {
+		if second.Vendor().Name != "" {
 			t.Error("failed to parse missing vendor")
 		}
 
@@ -144,48 +143,6 @@ func TestReadReceipts(t *testing.T) {
 			t.Error("missing invalid error")
 		}
 	})
-}
-
-func TestParseReceipt(t *testing.T) {
-	bytes := []byte(`{
-  "key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "signature": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "license": {
-    "values": {
-      "api": "https://api.licensezero.com",
-      "offerID": "9aab7058-599a-43db-9449-5fc0971ecbfa",
-      "effective": "2018-11-13T20:20:39Z",
-      "orderID": "2c743a84-09ce-4549-9f0d-19d8f53462bb",
-      "licensee": {
-        "email": "licensee@example.com",
-        "jurisdiction": "US-TX",
-        "name": "Joe Licensee"
-      },
-      "licensor": {
-        "email": "licensor@example.com",
-        "jurisdiction": "US-CA",
-        "name": "Jane Licensor",
-        "licensorID": "59e70a4d-ffee-4e9d-a526-7a9ff9161664"
-      }
-    },
-    "form": "Test license form."
-  }
-}`)
-	var unstructured interface{}
-	err := json.Unmarshal(bytes, &unstructured)
-	if err != nil {
-		t.Error(err)
-	}
-	receipt, err := ParseReceipt(unstructured)
-	if receipt.API != "https://api.licensezero.com" {
-		t.Error("failed to parse API")
-	}
-	if receipt.OrderID != "2c743a84-09ce-4549-9f0d-19d8f53462bb" {
-		t.Error("failed to parse orderID")
-	}
-	if receipt.OfferID != "9aab7058-599a-43db-9449-5fc0971ecbfa" {
-		t.Error("failed to parse orderID")
-	}
 }
 
 func WithTestDir(t *testing.T, script func(string)) {

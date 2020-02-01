@@ -1,11 +1,10 @@
-package inventory
+package main
 
 import (
 	"encoding/json"
 	"errors"
 	"github.com/yookoala/realpath"
 	"io/ioutil"
-	"licensezero.com/cli2/abstract"
 	"os"
 	"path"
 )
@@ -95,7 +94,7 @@ func ReadLicenseZeroJSON(directoryPath string) (findings []finding, err error) {
 	}
 	var unstructured interface{}
 	json.Unmarshal(data, &unstructured)
-	parsed, err := abstract.ParseArtifactMetadata(unstructured)
+	parsed, err := ParseArtifact(unstructured)
 	for _, offer := range parsed.Offers() {
 		item := finding{
 			Path:    directoryPath,

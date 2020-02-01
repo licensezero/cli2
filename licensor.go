@@ -1,4 +1,4 @@
-package abstract
+package main
 
 // Licensor represents a party that offered licenses for sale.
 type Licensor struct {

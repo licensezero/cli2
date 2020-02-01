@@ -6,7 +6,7 @@ licensezero: prebuild
 	go build -o licensezero -ldflags "$(LDFLAGS)"
 
 test: licensezero prebuild
-	go test ./...
+	go test ./... | tee test.log
 
 build: prebuild
 	gox -output="licensezero-{{.OS}}-{{.Arch}}" -ldflags "$(LDFLAGS)" -verbose

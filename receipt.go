@@ -1,11 +1,10 @@
-package abstract
+package main
 
 import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"github.com/mitchellh/mapstructure"
 	"github.com/xeipuuv/gojsonschema"
 	"golang.org/x/crypto/ed25519"
 )
@@ -26,22 +25,22 @@ type Receipt interface {
 }
 
 type receipt1_0_0Pre struct {
-	key       string `json:"key"`
-	signature string `json:"signature"`
+	key       string
+	signature string
 	license   struct {
 		values struct {
-			api       string   `json:"api"`
-			offerID   string   `json:"offerID"`
-			orderID   string   `json:"orderID"`
-			effective string   `json:"effective"`
-			price     Price    `json:"price"`
-			expires   string   `json:"expires"`
-			licensor  Licensor `json:"licensor"`
-			licensee  Licensee `json:"licensee"`
-			vendor    Vendor   `json:"vendor"`
-		} `json:"values"`
-		form string `json:"form"`
-	} `json:"license"`
+			api       string
+			offerID   string
+			orderID   string
+			effective string
+			price     Price
+			expires   string
+			licensor  Licensor
+			licensee  Licensee
+			vendor    Vendor
+		}
+		form string
+	}
 }
 
 func (r receipt1_0_0Pre) API() string {
@@ -287,21 +286,70 @@ const receipt1_0_0PreSchema = `{
 // ParseReceipt validates and parses parsed JSON data as a Receipt.
 func ParseReceipt(unstructured interface{}) (Receipt, error) {
 	if validV1Receipt(unstructured) {
-		var v1 receipt1_0_0Pre
-		err := mapstructure.Decode(unstructured, &v1)
-		if err != nil {
-			return nil, err
-		}
-		return v1, nil
+		return parseV1Receipt(unstructured), nil
 	}
 	return nil, errors.New("unknown schema")
 }
 
+var v1ReceiptSchema *gojsonschema.Schema = nil
+
 func validV1Receipt(parsed interface{}) bool {
+	if v1ReceiptSchema == nil {
+		schema, err := schemaLoader().Compile(
+			gojsonschema.NewStringLoader(receipt1_0_0PreSchema),
+		)
+		if err != nil {
+			panic(err)
+		}
+		v1ReceiptSchema = schema
+	}
 	dataLoader := gojsonschema.NewGoLoader(parsed)
 	result, err := v1ReceiptSchema.Validate(dataLoader)
 	if err != nil {
 		return false
 	}
 	return result.Valid()
+}
+
+func parseV1Receipt(unstructured interface{}) (r receipt1_0_0Pre) {
+	asMap := unstructured.(map[string]interface{})
+	// Signature
+	r.key = asMap["key"].(string)
+	r.signature = asMap["signature"].(string)
+	// License
+	licenseMap := asMap["license"].(map[string]interface{})
+	// Values
+	valuesMap := licenseMap["values"].(map[string]interface{})
+	r.license.values.api = valuesMap["api"].(string)
+	r.license.values.offerID = valuesMap["offerID"].(string)
+	r.license.values.orderID = valuesMap["orderID"].(string)
+	r.license.values.effective = valuesMap["effective"].(string)
+	if expires, ok := valuesMap["expires"].(string); ok {
+		r.license.values.expires = expires
+	}
+	if price, ok := valuesMap["price"].(map[string]interface{}); ok {
+		r.license.values.price.Amount = uint(price["amount"].(float64))
+		r.license.values.price.Currency = price["currency"].(string)
+	}
+	// Licensee
+	licenseeMap := valuesMap["licensee"].(map[string]interface{})
+	r.license.values.licensee.EMail = licenseeMap["email"].(string)
+	r.license.values.licensee.Jurisdiction = licenseeMap["jurisdiction"].(string)
+	r.license.values.licensee.Name = licenseeMap["name"].(string)
+	// Licensor
+	licensorMap := valuesMap["licensor"].(map[string]interface{})
+	r.license.values.licensor.EMail = licensorMap["email"].(string)
+	r.license.values.licensor.Jurisdiction = licensorMap["jurisdiction"].(string)
+	r.license.values.licensor.Name = licensorMap["name"].(string)
+	r.license.values.licensor.LicensorID = licensorMap["licensorID"].(string)
+	// Vendor
+	if vendorMap, ok := valuesMap["vendor"].(map[string]interface{}); ok {
+		r.license.values.vendor.EMail = vendorMap["email"].(string)
+		r.license.values.vendor.Jurisdiction = vendorMap["jurisdiction"].(string)
+		r.license.values.vendor.Name = vendorMap["name"].(string)
+		r.license.values.vendor.Website = vendorMap["website"].(string)
+	}
+	// Form
+	r.license.form = licenseMap["form"].(string)
+	return
 }

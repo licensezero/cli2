@@ -1,8 +1,7 @@
-package abstract
+package main
 
 import (
 	"errors"
-	"github.com/mitchellh/mapstructure"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -60,10 +59,10 @@ const offer1_0_0PreSchema = `{
       "type": "object",
       "properties": {
         "single": {
-          "$ref": "offer.json"
+          "$ref": "price.json"
         },
         "site": {
-          "$ref": "offer.json"
+          "$ref": "price.json"
         }
       },
       "patternProperties": {
@@ -75,23 +74,41 @@ const offer1_0_0PreSchema = `{
   }
 }`
 
+// ParseOffer parses instructed offer data.
 func ParseOffer(unstructured interface{}) (Offer, error) {
 	if validV1Offer(unstructured) {
-		var v1 offer1_0_0Pre
-		err := mapstructure.Decode(unstructured, &v1)
-		if err != nil {
-			return nil, err
-		}
-		return v1, nil
+		return parseV1Offer(unstructured), nil
 	}
 	return nil, errors.New("unknown schema")
 }
 
+var v1OfferSchema *gojsonschema.Schema = nil
+
 func validV1Offer(unstructured interface{}) bool {
+	if v1OfferSchema == nil {
+		schema, err := schemaLoader().Compile(
+			gojsonschema.NewStringLoader(offer1_0_0PreSchema),
+		)
+		if err != nil {
+			panic(err)
+		}
+		v1OfferSchema = schema
+	}
 	dataLoader := gojsonschema.NewGoLoader(unstructured)
 	result, err := v1OfferSchema.Validate(dataLoader)
 	if err != nil {
 		return false
 	}
 	return result.Valid()
+}
+
+func parseV1Offer(unstructured interface{}) (o offer1_0_0Pre) {
+	asMap := unstructured.(map[string]interface{})
+	o.url = asMap["url"].(string)
+	o.licensorID = asMap["licensorID"].(string)
+	pricing := asMap["pricing"].(map[string]interface{})
+	single := pricing["single"].(map[string]interface{})
+	o.pricing.Single.Currency = single["currency"].(string)
+	o.pricing.Single.Amount = uint(single["amount"].(float64))
+	return
 }

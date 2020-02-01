@@ -1,4 +1,4 @@
-package inventory
+package main
 
 type licenseType int
 

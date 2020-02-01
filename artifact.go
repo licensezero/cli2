@@ -1,13 +1,12 @@
-package abstract
+package main
 
 import (
 	"errors"
-	"github.com/mitchellh/mapstructure"
 	"github.com/xeipuuv/gojsonschema"
 )
 
-// ArtifactMetadata encodes data about offers for an artifact.
-type ArtifactMetadata interface {
+// Artifact encodes data about offers for an artifact.
+type Artifact interface {
 	Offers() []ArtifactOffer
 }
 
@@ -19,11 +18,13 @@ type ArtifactOffer struct {
 }
 
 type artifact1_0_0Pre struct {
-	offers []struct {
-		api     string `json:"api"`
-		offerID string `json:"offerID"`
-		public  string `json:"public"`
-	}
+	offers []artifactOffer1_0_0Pre
+}
+
+type artifactOffer1_0_0Pre struct {
+	api     string
+	offerID string
+	public  string
 }
 
 func (a artifact1_0_0Pre) Offers() (offers []ArtifactOffer) {
@@ -84,24 +85,45 @@ const artifact1_0_0PreSchema = `{
   }
 }`
 
-// ParseArtifactMetadata validates and parses parsed JSON data as a ArtifactMetadata.
-func ParseArtifactMetadata(unstructured interface{}) (ArtifactMetadata, error) {
-	if validV1ArtifactMetadata(unstructured) {
-		var v1 artifact1_0_0Pre
-		err := mapstructure.Decode(unstructured, &v1)
-		if err != nil {
-			return nil, err
-		}
-		return v1, nil
+// ParseArtifact validates and parses parsed JSON data as a Artifact.
+func ParseArtifact(unstructured interface{}) (a Artifact, err error) {
+	if validV1Artifact(unstructured) {
+		return parseV1Artifact(unstructured), nil
 	}
-	return nil, errors.New("unknown schema")
+	return a, errors.New("unknown schema")
 }
 
-func validV1ArtifactMetadata(parsed interface{}) bool {
+var v1ArtifactSchema *gojsonschema.Schema = nil
+
+func validV1Artifact(parsed interface{}) bool {
+	if v1ArtifactSchema == nil {
+		v1ArtifactSchema, _ = schemaLoader().Compile(
+			gojsonschema.NewStringLoader(artifact1_0_0PreSchema),
+		)
+	}
 	dataLoader := gojsonschema.NewGoLoader(parsed)
-	result, err := v1ArtifactMetadataSchema.Validate(dataLoader)
+	result, err := v1ArtifactSchema.Validate(dataLoader)
 	if err != nil {
 		return false
 	}
 	return result.Valid()
+}
+
+func parseV1Artifact(unstructured interface{}) artifact1_0_0Pre {
+	asMap := unstructured.(map[string]interface{})
+	asArray := asMap["offers"].([]interface{})
+	offers := []artifactOffer1_0_0Pre{}
+	for _, element := range asArray {
+		offerMap := element.(map[string]interface{})
+		public, ok := offerMap["public"].(string)
+		if ok == false {
+			public = ""
+		}
+		offers = append(offers, artifactOffer1_0_0Pre{
+			api:     offerMap["api"].(string),
+			offerID: offerMap["offerID"].(string),
+			public:  public,
+		})
+	}
+	return artifact1_0_0Pre{offers: offers}
 }

@@ -1,4 +1,4 @@
-package abstract
+package main
 
 // Licensee represents a party that bought a license.
 type Licensee struct {

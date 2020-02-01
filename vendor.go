@@ -1,4 +1,4 @@
-package abstract
+package main
 
 // Vendor represents a party that sold a license.
 type Vendor struct {

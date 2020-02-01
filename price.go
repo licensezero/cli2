@@ -1,4 +1,4 @@
-package abstract
+package main
 
 // Price represents a price in a specific currency.
 type Price struct {

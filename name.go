@@ -1,6 +1,6 @@
-package abstract
+package main
 
-const Name1_0_0Pre = `{
+const name1_0_0PreSchema = `{
   "$schema": "http://json-schema.org/schema#",
   "$id": "https://schemas.licensezero.com/1.0.0-pre/name.json",
   "title": "personal or organization name",
