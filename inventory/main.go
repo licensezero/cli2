@@ -47,11 +47,13 @@ func CompileInventory(
 	ignoreNoncommercial bool,
 	ignoreReciprocal bool,
 ) (inventory *Inventory, err error) {
-	receipts, errors, err := user.ReadReceipts(configPath)
+	// TODO: Don't ignore receipt read errors.
+	receipts, _, err := user.ReadReceipts(configPath)
 	if err != nil {
 		return
 	}
-	accounts, errors, err := user.ReadAccounts(configPath)
+	// TODO: Don't ignore account read errors.
+	accounts, _, err := user.ReadAccounts(configPath)
 	findings, err := find(cwd)
 	if err != nil {
 		return

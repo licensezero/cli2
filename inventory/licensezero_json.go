@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/yookoala/realpath"
 	"io/ioutil"
+	"licensezero.com/cli2/schemas"
 	"os"
 	"path"
 )
@@ -82,9 +83,10 @@ func LocalFindings(directoryPath string) (findings []finding, err error) {
 	if hadFindings > 1 {
 		return nil, errors.New("multiple metadata files")
 	}
+	return
 }
 
-// ReadLicenseZeroJSON read metadata from licensezero.json.
+// ReadLicenseZeroJSON reads metadata from licensezero.json.
 func ReadLicenseZeroJSON(directoryPath string) (findings []finding, err error) {
 	jsonFile := path.Join(directoryPath, "licensezero.json")
 	data, err := ioutil.ReadFile(jsonFile)
@@ -93,11 +95,12 @@ func ReadLicenseZeroJSON(directoryPath string) (findings []finding, err error) {
 	}
 	var unstructured interface{}
 	json.Unmarshal(data, &unstructured)
-	metadata, err := ParseArtifactMetadata(unstructured)
+	parsed, err := schemas.ParseArtifactMetadata(unstructured)
 	for _, offer := range parsed.Offers {
 		item := finding{
-			Path:  directoryPath,
-			Offer: offer,
+			Path:    directoryPath,
+			API:     offer.API,
+			OfferID: offer.OfferID,
 		}
 		realDirectory, err := realpath.Realpath(directoryPath)
 		if err != nil {
@@ -105,7 +108,7 @@ func ReadLicenseZeroJSON(directoryPath string) (findings []finding, err error) {
 		} else {
 			item.Path = directoryPath
 		}
-		findings = append(findings, finding)
+		findings = append(findings, item)
 	}
 	return findings, nil
 }

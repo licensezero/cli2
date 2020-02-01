@@ -1,101 +1,16 @@
 package inventory
 
-import "encoding/json"
-import "github.com/yookoala/realpath"
-import "io/ioutil"
-import "os"
-import "path"
-import "strings"
+import (
+	"encoding/json"
+	"io/ioutil"
+	"path"
+	"strings"
+)
 
 type packageJSONFile struct {
 	Name        string      `json:"name"`
 	Version     string      `json:"version"`
 	LicenseZero interface{} `json:"licensezero"`
-}
-
-func readNPMProjects(packagePath string) ([]Project, error) {
-	var returned []Project
-	nodeModules := path.Join(packagePath, "node_modules")
-	entries, err := readAndStatDir(nodeModules)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return []Project{}, nil
-		}
-		return nil, err
-	}
-	processProject := func(directory string, scope *string) error {
-		anyNewProjects := false
-		parsed, err := readPackageJSON(directory)
-		if err != nil {
-			return err
-		}
-		for _, envelope := range parsed.Envelopes {
-			if alreadyHaveProject(returned, envelope.Manifest.ProjectID) {
-				continue
-			}
-			anyNewProjects = true
-			project := Project{
-				Type:     "npm",
-				Path:     directory,
-				Name:     parsed.Name,
-				Version:  parsed.Version,
-				Envelope: envelope,
-			}
-			realDirectory, err := realpath.Realpath(directory)
-			if err != nil {
-				project.Path = realDirectory
-			} else {
-				project.Path = directory
-			}
-			if scope != nil {
-				project.Scope = *scope
-			}
-			returned = append(returned, project)
-		}
-		if anyNewProjects {
-			below, recursionError := readNPMProjects(directory)
-			if recursionError != nil {
-				return recursionError
-			}
-			returned = append(returned, below...)
-		}
-		return nil
-	}
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		name := entry.Name()
-		if strings.HasPrefix(name, "@") { // ./node_modules/@scope/package
-			scope := name[1:]
-			scopePath := path.Join(nodeModules, name)
-			scopeEntries, err := readAndStatDir(scopePath)
-			if err != nil {
-				if os.IsNotExist(err) {
-					continue
-				} else {
-					return nil, err
-				}
-			}
-			for _, scopeEntry := range scopeEntries {
-				if !scopeEntry.IsDir() {
-					continue
-				}
-				directory := path.Join(nodeModules, name, scopeEntry.Name())
-				err := processProject(directory, &scope)
-				if err != nil {
-					return nil, err
-				}
-			}
-		} else { // ./node_modules/package/
-			directory := path.Join(nodeModules, name)
-			err := processProject(directory, nil)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	return returned, nil
 }
 
 func readPackageJSON(directory string) (*packageJSONFile, error) {
@@ -110,15 +25,6 @@ func readPackageJSON(directory string) (*packageJSONFile, error) {
 		return nil, err
 	}
 	return &parsed, nil
-}
-
-func alreadyHaveProject(projects []Project, projectID string) bool {
-	for _, other := range projects {
-		if other.Envelope.Manifest.ProjectID == projectID {
-			return true
-		}
-	}
-	return false
 }
 
 func findNPMPackageInfo(directoryPath string) *finding {

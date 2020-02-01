@@ -3,7 +3,7 @@ package inventory
 type licenseType int
 
 const (
-	reciprocal LicenseType = iota
+	reciprocal licenseType = iota
 	noncommercial
 	unknown
 )
