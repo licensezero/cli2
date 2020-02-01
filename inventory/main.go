@@ -26,6 +26,8 @@ type Item struct {
 	Name    string
 	Version string
 	Public  string
+	API     string
+	OfferID string
 	Offer   abstract.Offer
 }
 
@@ -79,7 +81,7 @@ func CompileInventory(
 				Name:    finding.Name,
 				Version: finding.Version,
 				Public:  finding.Public,
-				Offer:   *offer,
+				Offer:   offer,
 			}
 			inventory.Licensable = append(inventory.Licensable, item)
 		}
@@ -139,10 +141,10 @@ func alreadyHave(findings []finding, finding *finding) bool {
 }
 
 func haveReceipt(item *Item, receipts []abstract.Receipt) bool {
-	api := item.Offer.API
-	offerID := item.Offer.OfferID
+	api := item.API
+	offerID := item.OfferID
 	for _, account := range receipts {
-		if account.API == api && account.OfferID == offerID {
+		if account.API() == api && account.OfferID() == offerID {
 			return true
 		}
 	}
@@ -150,10 +152,10 @@ func haveReceipt(item *Item, receipts []abstract.Receipt) bool {
 }
 
 func ownProject(item *Item, accounts []abstract.Account) bool {
-	api := item.Offer.API
-	licensorID := item.Offer.LicensorID
+	api := item.API
+	licensorID := item.Offer.LicensorID()
 	for _, account := range accounts {
-		if account.API == api && account.LicensorID == licensorID {
+		if account.API() == api && account.LicensorID() == licensorID {
 			return true
 		}
 	}

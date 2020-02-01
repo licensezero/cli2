@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/yookoala/realpath"
 	"io/ioutil"
-	"licensezero.com/cli2/schemas"
+	"licensezero.com/cli2/abstract"
 	"os"
 	"path"
 )
@@ -95,8 +95,8 @@ func ReadLicenseZeroJSON(directoryPath string) (findings []finding, err error) {
 	}
 	var unstructured interface{}
 	json.Unmarshal(data, &unstructured)
-	parsed, err := schemas.ParseArtifactMetadata(unstructured)
-	for _, offer := range parsed.Offers {
+	parsed, err := abstract.ParseArtifactMetadata(unstructured)
+	for _, offer := range parsed.Offers() {
 		item := finding{
 			Path:    directoryPath,
 			API:     offer.API,

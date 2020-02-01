@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"licensezero.com/cli2/abstract"
-	"licensezero.com/cli2/schemas"
 	"os"
 	"path"
 )
@@ -26,13 +25,13 @@ func ReadReceipts(configPath string) (receipts []abstract.Receipt, errors []erro
 		if err != nil {
 			errors = append(errors, err)
 		} else {
-			receipts = append(receipts, *receipt)
+			receipts = append(receipts, receipt)
 		}
 	}
 	return
 }
 
-func readReceipt(filePath string) (*abstract.Receipt, error) {
+func readReceipt(filePath string) (abstract.Receipt, error) {
 	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil, err
@@ -42,5 +41,5 @@ func readReceipt(filePath string) (*abstract.Receipt, error) {
 	if err != nil {
 		return nil, err
 	}
-	return schemas.ParseReceipt(unstructured)
+	return abstract.ParseReceipt(unstructured)
 }

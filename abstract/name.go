@@ -1,4 +1,4 @@
-package schemas
+package abstract
 
 const Name1_0_0Pre = `{
   "$schema": "http://json-schema.org/schema#",
