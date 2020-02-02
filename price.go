@@ -2,8 +2,8 @@ package main
 
 // Price represents a price in a specific currency.
 type Price struct {
-	Currency string
-	Amount   uint
+	Amount   uint   `json:"amount"`
+	Currency string `json:"currency"`
 }
 
 const price1_0_0PreSchema = `{

@@ -20,21 +20,21 @@ type Pricing struct {
 }
 
 type offer1_0_0Pre struct {
-	licensorID string  `mapstructure:"licensorID"`
-	pricing    Pricing `mapstructure:"pricing"`
-	url        string  `mapstructure:"url"`
+	Licensor string  `mapstructure:"licensorID"`
+	Pricing  Pricing `mapstructure:"pricing"`
+	URL      string  `mapstructure:"url"`
 }
 
 func (o offer1_0_0Pre) URL() string {
-	return o.url
+	return o.URL
 }
 
 func (o offer1_0_0Pre) LicensorID() string {
-	return o.licensorID
+	return o.LicensorID
 }
 
 func (o offer1_0_0Pre) Pricing() Pricing {
-	return o.pricing
+	return o.Pricing
 }
 
 const offer1_0_0PreSchema = `{

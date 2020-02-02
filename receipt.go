@@ -85,16 +85,79 @@ func (r receipt1_0_0Pre) Form() string {
 }
 
 func (r receipt1_0_0Pre) ValidateSignature() error {
-	serialized, err := json.Marshal(r.License)
-	if err != nil {
-		return errors.New("could not serialize")
+	serialized := serializeV1License(&r)
+	return checkSignature(r.Key, r.Signature, serialized)
+}
+
+// Manually implement JSON serialization for receipt license objects
+// to ensure that keys are serialized in sorted order and optional
+// properties, like price, get correctly omitted.
+func serializeV1License(r *receipt1_0_0Pre) []byte {
+	var buffer bytes.Buffer
+	buffer.WriteString("{")
+	buffer.WriteString("\"form\":" + stringify(r.License.Form) + ",")
+	values := r.License.Values
+
+	// Values
+	buffer.WriteString("\"values\":{")
+	buffer.WriteString("\"api\":" + stringify(values.API) + ",")
+	buffer.WriteString("\"effective\":" + stringify(values.Effective) + ",")
+	if expires := values.Expires; expires != "" {
+		buffer.WriteString("\"expires\":" + stringify(expires) + ",")
 	}
-	compacted := bytes.NewBuffer([]byte{})
-	err = json.Compact(compacted, serialized)
-	if err != nil {
-		return errors.New("could not compact JSON")
+
+	// Licensee
+	licensee := values.Licensee
+	buffer.WriteString("\"licensee\":{")
+	buffer.WriteString("\"email\":" + stringify(licensee.EMail) + ",")
+	buffer.WriteString("\"jurisdiction\":" + stringify(licensee.Jurisdiction) + ",")
+	buffer.WriteString("\"name\":" + stringify(licensee.Name))
+	buffer.WriteString("},")
+
+	// Licensor
+	licensor := values.Licensor
+	buffer.WriteString("\"licensor\":{")
+	buffer.WriteString("\"email\":" + stringify(licensor.EMail) + ",")
+	buffer.WriteString("\"jurisdiction\":" + stringify(licensor.Jurisdiction) + ",")
+	buffer.WriteString("\"licensorID\":" + stringify(licensor.LicensorID) + ",")
+	buffer.WriteString("\"name\":" + stringify(licensor.Name))
+	buffer.WriteString("},")
+
+	// OfferID
+	buffer.WriteString("\"offerID\":" + stringify(values.OfferID) + ",")
+
+	// OrderID
+	buffer.WriteString("\"orderID\":" + stringify(values.OrderID))
+
+	// Price
+	if price := values.Price; price.Currency != "" && price.Amount != 0 {
+		buffer.WriteString(",")
+		buffer.WriteString("\"price\":{")
+		buffer.WriteString("\"amount\":" + stringify(price.Amount) + ",")
+		buffer.WriteString("\"currency\":" + stringify(price.Currency))
+		buffer.WriteString("}")
 	}
-	return checkSignature(r.Key, r.Signature, compacted.Bytes())
+
+	// Vendor
+	if vendor := values.Vendor; vendor.Name != "" {
+		buffer.WriteString(",")
+		buffer.WriteString("\"vendor\":{")
+		buffer.WriteString("\"email\":" + stringify(vendor.EMail) + ",")
+		buffer.WriteString("\"jurisdiction\":" + stringify(vendor.Jurisdiction) + ",")
+		buffer.WriteString("\"name\":" + stringify(vendor.Name) + ",")
+		buffer.WriteString("\"website\":" + stringify(vendor.Website))
+		buffer.WriteString("}")
+	}
+
+	buffer.WriteString("}") // values
+	buffer.WriteString("}") // object
+
+	return buffer.Bytes()
+}
+
+func stringify(input interface{}) (result string) {
+	data, _ := json.Marshal(input)
+	return string(data)
 }
 
 func checkSignature(publicKey string, signature string, json []byte) error {
@@ -309,7 +372,10 @@ func validV1Receipt(parsed interface{}) bool {
 	if err != nil {
 		return false
 	}
-	return result.Valid()
+	if result.Valid() {
+		return true
+	}
+	return false
 }
 
 func parseV1Receipt(unstructured interface{}) (r receipt1_0_0Pre) {
