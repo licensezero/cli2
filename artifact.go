@@ -53,16 +53,11 @@ const artifact1_0_0PreSchema = `{
       "items": {
         "type": "object",
         "required": [
-          "offerID",
-          "api"
+          "api",
+          "offerID"
         ],
         "additionalProperties": false,
         "properties": {
-          "offerID": {
-            "title": "UUIDv4 offer identifier",
-            "type": "string",
-            "format": "uuid"
-          },
           "api": {
             "title": "licensing API",
             "type": "string",
@@ -71,6 +66,11 @@ const artifact1_0_0PreSchema = `{
             "examples": [
               "https://api.licensezero.com"
             ]
+          },
+          "offerID": {
+            "title": "UUIDv4 offer identifier",
+            "type": "string",
+            "format": "uuid"
           },
           "public": {
             "title": "public license identifier",

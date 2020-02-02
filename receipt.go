@@ -190,8 +190,8 @@ const receipt1_0_0PreSchema = `{
   "type": "object",
   "required": [
     "key",
-    "signature",
-    "license"
+    "license",
+    "signature"
   ],
   "additionalProperties": false,
   "properties": {
@@ -199,33 +199,42 @@ const receipt1_0_0PreSchema = `{
       "title": "public signing key of the license vendor",
       "$ref": "key.json"
     },
-    "signature": {
-      "title": "signature of the license vendor",
-      "$ref": "signature.json"
-    },
     "license": {
       "title": "license manifest",
       "type": "object",
       "required": [
-        "values",
-        "form"
+        "form",
+        "values"
       ],
       "properties": {
+        "form": {
+          "title": "license form",
+          "type": "string",
+          "minLength": 1
+        },
         "values": {
           "type": "object",
           "required": [
             "api",
-            "offerID",
-            "orderID",
             "effective",
+            "licensee",
             "licensor",
-            "licensee"
+            "offerID",
+            "orderID"
           ],
           "additionalProperties": false,
           "properties": {
             "api": {
               "title": "license API",
               "$ref": "url.json"
+            },
+            "effective": {
+              "title": "effective date",
+              "$ref": "time.json"
+            },
+            "expires": {
+              "title": "expiration date of the license",
+              "$ref": "time.json"
             },
             "offerID": {
               "title": "offer identifier",
@@ -237,17 +246,9 @@ const receipt1_0_0PreSchema = `{
               "type": "string",
               "format": "uuid"
             },
-            "effective": {
-              "title": "effective date",
-              "$ref": "time.json"
-            },
             "price": {
               "title": "purchase price",
               "$ref": "price.json"
-            },
-            "expires": {
-              "title": "expiration date of the license",
-              "$ref": "time.json"
             },
             "licensee": {
               "title": "licensee",
@@ -281,8 +282,8 @@ const receipt1_0_0PreSchema = `{
               "required": [
                 "email",
                 "jurisdiction",
-                "name",
-                "licensorID"
+                "licensorID",
+                "name"
               ],
               "properties": {
                 "email": {
@@ -292,16 +293,16 @@ const receipt1_0_0PreSchema = `{
                 "jurisdiction": {
                   "$ref": "jurisdiction.json"
                 },
+                "licensorID": {
+                  "title": "licensor identifier",
+                  "type": "string",
+                  "format": "uuid"
+                },
                 "name": {
                   "$ref": "name.json",
                   "examples": [
                     "Joe Licensor"
                   ]
-                },
-                "licensorID": {
-                  "title": "licensor identifier",
-                  "type": "string",
-                  "format": "uuid"
                 }
               }
             },
@@ -311,8 +312,8 @@ const receipt1_0_0PreSchema = `{
               "type": "object",
               "required": [
                 "email",
-                "name",
                 "jurisdiction",
+                "name",
                 "website"
               ],
               "additionalProperties": false,
@@ -321,14 +322,14 @@ const receipt1_0_0PreSchema = `{
                   "type": "string",
                   "format": "email"
                 },
+                "jurisdiction": {
+                  "$ref": "jurisdiction.json"
+                },
                 "name": {
                   "$ref": "name.json",
                   "example": [
                     "Artless Devices LLC"
                   ]
-                },
-                "jurisdiction": {
-                  "$ref": "jurisdiction.json"
                 },
                 "website": {
                   "$ref": "url.json"
@@ -336,13 +337,12 @@ const receipt1_0_0PreSchema = `{
               }
             }
           }
-        },
-        "form": {
-          "title": "license form",
-          "type": "string",
-          "minLength": 1
         }
       }
+    },
+    "signature": {
+      "title": "signature of the license vendor",
+      "$ref": "signature.json"
     }
   }
 }`

@@ -24,16 +24,12 @@ const offer1_0_0PreSchema = `{
   "$id": "https://schemas.licensezero.com/1.0.0-pre/offer.json",
   "type": "object",
   "required": [
-    "url",
     "licensorID",
-    "pricing"
+    "pricing",
+    "url"
   ],
   "additionalProperties": true,
   "properties": {
-    "url": {
-      "type": "string",
-      "format": "uri"
-    },
     "licensorID": {
       "type": "string",
       "format": "uuid"
@@ -53,6 +49,10 @@ const offer1_0_0PreSchema = `{
           "$ref": "price.json"
         }
       }
+    },
+    "url": {
+      "type": "string",
+      "format": "uri"
     }
   }
 }`
