@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/mitchellh/mapstructure"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -103,12 +104,6 @@ func validV1Offer(unstructured interface{}) bool {
 }
 
 func parseV1Offer(unstructured interface{}) (o offer1_0_0Pre) {
-	asMap := unstructured.(map[string]interface{})
-	o.url = asMap["url"].(string)
-	o.licensorID = asMap["licensorID"].(string)
-	pricing := asMap["pricing"].(map[string]interface{})
-	single := pricing["single"].(map[string]interface{})
-	o.pricing.Single.Currency = single["currency"].(string)
-	o.pricing.Single.Amount = uint(single["amount"].(float64))
+	mapstructure.Decode(unstructured, &o)
 	return
 }

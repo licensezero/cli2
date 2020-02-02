@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"github.com/mitchellh/mapstructure"
 	"github.com/xeipuuv/gojsonschema"
 	"golang.org/x/crypto/ed25519"
 )
@@ -25,66 +26,66 @@ type Receipt interface {
 }
 
 type receipt1_0_0Pre struct {
-	key       string
-	signature string
-	license   struct {
-		values struct {
-			api       string
-			offerID   string
-			orderID   string
-			effective string
-			price     Price
-			expires   string
-			licensor  Licensor
-			licensee  Licensee
-			vendor    Vendor
+	Key       string
+	Signature string
+	License   struct {
+		Values struct {
+			API       string
+			OfferID   string
+			OrderID   string
+			Effective string
+			Price     Price
+			Expires   string
+			Licensor  Licensor
+			Licensee  Licensee
+			Vendor    Vendor
 		}
-		form string
+		Form string
 	}
 }
 
 func (r receipt1_0_0Pre) API() string {
-	return r.license.values.api
+	return r.License.Values.API
 }
 
 func (r receipt1_0_0Pre) OfferID() string {
-	return r.license.values.offerID
+	return r.License.Values.OfferID
 }
 
 func (r receipt1_0_0Pre) OrderID() string {
-	return r.license.values.orderID
+	return r.License.Values.OrderID
 }
 
 func (r receipt1_0_0Pre) Effective() string {
-	return r.license.values.effective
+	return r.License.Values.Effective
 }
 
 func (r receipt1_0_0Pre) Expires() string {
-	return r.license.values.expires
+	return r.License.Values.Expires
 }
 
 func (r receipt1_0_0Pre) Price() Price {
-	return r.license.values.price
+	return r.License.Values.Price
 }
 
 func (r receipt1_0_0Pre) Licensor() Licensor {
-	return r.license.values.licensor
+	return r.License.Values.Licensor
 }
 
 func (r receipt1_0_0Pre) Licensee() Licensee {
-	return r.license.values.licensee
+	return r.License.Values.Licensee
 }
 
 func (r receipt1_0_0Pre) Vendor() Vendor {
-	return r.license.values.vendor
+	return r.License.Values.Vendor
 }
 
 func (r receipt1_0_0Pre) Form() string {
-	return r.license.form
+	return r.License.Form
 }
 
 func (r receipt1_0_0Pre) ValidateSignature() error {
-	serialized, err := json.Marshal(r.license)
+	serialized, err := json.Marshal(r.License)
 	if err != nil {
 		return errors.New("could not serialize")
 	}
@@ -93,7 +94,7 @@ func (r receipt1_0_0Pre) ValidateSignature() error {
 	if err != nil {
 		return errors.New("could not compact JSON")
 	}
-	return checkSignature(r.key, r.signature, compacted.Bytes())
+	return checkSignature(r.Key, r.Signature, compacted.Bytes())
 }
 
 func checkSignature(publicKey string, signature string, json []byte) error {
@@ -312,44 +313,6 @@ func validV1Receipt(parsed interface{}) bool {
 }
 
 func parseV1Receipt(unstructured interface{}) (r receipt1_0_0Pre) {
-	asMap := unstructured.(map[string]interface{})
-	// Signature
-	r.key = asMap["key"].(string)
-	r.signature = asMap["signature"].(string)
-	// License
-	licenseMap := asMap["license"].(map[string]interface{})
-	// Values
-	valuesMap := licenseMap["values"].(map[string]interface{})
-	r.license.values.api = valuesMap["api"].(string)
-	r.license.values.offerID = valuesMap["offerID"].(string)
-	r.license.values.orderID = valuesMap["orderID"].(string)
-	r.license.values.effective = valuesMap["effective"].(string)
-	if expires, ok := valuesMap["expires"].(string); ok {
-		r.license.values.expires = expires
-	}
-	if price, ok := valuesMap["price"].(map[string]interface{}); ok {
-		r.license.values.price.Amount = uint(price["amount"].(float64))
-		r.license.values.price.Currency = price["currency"].(string)
-	}
-	// Licensee
-	licenseeMap := valuesMap["licensee"].(map[string]interface{})
-	r.license.values.licensee.EMail = licenseeMap["email"].(string)
-	r.license.values.licensee.Jurisdiction = licenseeMap["jurisdiction"].(string)
-	r.license.values.licensee.Name = licenseeMap["name"].(string)
-	// Licensor
-	licensorMap := valuesMap["licensor"].(map[string]interface{})
-	r.license.values.licensor.EMail = licensorMap["email"].(string)
-	r.license.values.licensor.Jurisdiction = licensorMap["jurisdiction"].(string)
-	r.license.values.licensor.Name = licensorMap["name"].(string)
-	r.license.values.licensor.LicensorID = licensorMap["licensorID"].(string)
-	// Vendor
-	if vendorMap, ok := valuesMap["vendor"].(map[string]interface{}); ok {
-		r.license.values.vendor.EMail = vendorMap["email"].(string)
-		r.license.values.vendor.Jurisdiction = vendorMap["jurisdiction"].(string)
-		r.license.values.vendor.Name = vendorMap["name"].(string)
-		r.license.values.vendor.Website = vendorMap["website"].(string)
-	}
-	// Form
-	r.license.form = licenseMap["form"].(string)
+	mapstructure.Decode(unstructured, &r)
 	return
 }

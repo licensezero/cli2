@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/mitchellh/mapstructure"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -18,21 +19,21 @@ type ArtifactOffer struct {
 }
 
 type artifact1_0_0Pre struct {
-	offers []artifactOffer1_0_0Pre
+	OfferArray []artifactOffer1_0_0Pre `mapstructure:"offers"`
 }
 
 type artifactOffer1_0_0Pre struct {
-	api     string
-	offerID string
-	public  string
+	API     string
+	OfferID string
+	Public  string
 }
 
 func (a artifact1_0_0Pre) Offers() (offers []ArtifactOffer) {
-	for _, item := range a.offers {
+	for _, item := range a.OfferArray {
 		offers = append(offers, ArtifactOffer{
-			API:     item.api,
-			OfferID: item.offerID,
-			Public:  item.public,
+			API:     item.API,
+			OfferID: item.OfferID,
+			Public:  item.Public,
 		})
 	}
 	return
@@ -109,21 +110,7 @@ func validV1Artifact(parsed interface{}) bool {
 	return result.Valid()
 }
 
-func parseV1Artifact(unstructured interface{}) artifact1_0_0Pre {
-	asMap := unstructured.(map[string]interface{})
-	asArray := asMap["offers"].([]interface{})
-	offers := []artifactOffer1_0_0Pre{}
-	for _, element := range asArray {
-		offerMap := element.(map[string]interface{})
-		public, ok := offerMap["public"].(string)
-		if ok == false {
-			public = ""
-		}
-		offers = append(offers, artifactOffer1_0_0Pre{
-			api:     offerMap["api"].(string),
-			offerID: offerMap["offerID"].(string),
-			public:  public,
-		})
-	}
-	return artifact1_0_0Pre{offers: offers}
+func parseV1Artifact(unstructured interface{}) (a artifact1_0_0Pre) {
+	mapstructure.Decode(unstructured, &a)
+	return
 }
