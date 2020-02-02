@@ -150,7 +150,7 @@ func haveReceipt(item *Item, receipts []Receipt) bool {
 
 func ownProject(item *Item, accounts []Account) bool {
 	api := item.API
-	licensorID := item.Offer.LicensorID()
+	licensorID := item.Offer.LicensorID
 	for _, account := range accounts {
 		if account.API() == api && account.LicensorID() == licensorID {
 			return true

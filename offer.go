@@ -7,34 +7,16 @@ import (
 )
 
 // Offer represents an offer to sell licenses.
-type Offer interface {
-	URL() string
-	LicensorID() string
-	Pricing() Pricing
+type Offer struct {
+	URL        string  `mapstructure:"url"`
+	LicensorID string  `mapstructure:"licensorID"`
+	Pricing    Pricing `mapstructure:"pricing"`
 }
 
 // Pricing represents a price list.
 type Pricing struct {
-	Single    Price
-	Relicense Price
-}
-
-type offer1_0_0Pre struct {
-	Licensor string  `mapstructure:"licensorID"`
-	Pricing  Pricing `mapstructure:"pricing"`
-	URL      string  `mapstructure:"url"`
-}
-
-func (o offer1_0_0Pre) URL() string {
-	return o.URL
-}
-
-func (o offer1_0_0Pre) LicensorID() string {
-	return o.LicensorID
-}
-
-func (o offer1_0_0Pre) Pricing() Pricing {
-	return o.Pricing
+	Single    Price `mapstructure:"single"`
+	Relicense Price `mapstructure:"relicense"`
 }
 
 const offer1_0_0PreSchema = `{
@@ -80,7 +62,7 @@ func ParseOffer(unstructured interface{}) (Offer, error) {
 	if validV1Offer(unstructured) {
 		return parseV1Offer(unstructured), nil
 	}
-	return nil, errors.New("unknown schema")
+	return Offer{}, errors.New("unknown schema")
 }
 
 var v1OfferSchema *gojsonschema.Schema = nil
@@ -103,7 +85,7 @@ func validV1Offer(unstructured interface{}) bool {
 	return result.Valid()
 }
 
-func parseV1Offer(unstructured interface{}) (o offer1_0_0Pre) {
+func parseV1Offer(unstructured interface{}) (o Offer) {
 	mapstructure.Decode(unstructured, &o)
 	return
 }

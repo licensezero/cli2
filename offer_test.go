@@ -25,10 +25,10 @@ func TestParseOffer(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if offer.URL() != "http://example.com" {
+	if offer.URL != "http://example.com" {
 		t.Error("failed to parse URL")
 	}
-	if offer.LicensorID() != "d56ee0a6-4ed3-4793-9485-6135644c158f" {
+	if offer.LicensorID != "d56ee0a6-4ed3-4793-9485-6135644c158f" {
 		t.Error("failed to parse licensorID")
 	}
 }
